@@ -7,7 +7,6 @@ use crate::ip::ip_range_bounds::IpRangeBounds;
 
 mod ip;
 mod logger;
-mod utility;
 
 #[derive(Parser, Debug)]
 #[clap(author = "Zethika", version, about)]
