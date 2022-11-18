@@ -40,11 +40,9 @@ impl FromStr for IpRangeBounds {
 
 impl IpRangeBounds {
     pub fn validate_ip_range(range: &str) -> Result<(), String> {
-
-        if range.trim().len() != range.len() {
-            Err(String::from("package name cannot have leading and trailing space"))
-        } else {
-            Ok(())
+        match IpRangeBounds::from_str(range) {
+            Ok(_) => Ok(()),
+            Err(e) => Err(e),
         }
     }
 }
