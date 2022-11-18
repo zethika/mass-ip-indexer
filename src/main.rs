@@ -50,9 +50,6 @@ fn index(r0: &str, r1: &str, r2: &str, r3: &str, logger: &DummyLogger) -> std::i
         IpRangeBounds::from_str(r3).unwrap(),
     );
 
-    dbg!(range);
-
-    // dbg!(range);
     return Ok(());
 }
 
