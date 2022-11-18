@@ -13,9 +13,13 @@ impl FromStr for IpRangeBounds {
         let mut lower: u8 = 0;
         let mut upper: u8 = 255;
         if range.contains("-") {
-            let hyphen_position: usize = range.find('-').unwrap();
+            let parts: Vec<&str> = range.trim().split("-").collect();
+            if parts.len() != 2 {
+                return Err(String::from("There can only be 2 elements in a range"))
+            }
 
-
+            lower = parts[0].parse().unwrap();
+            upper = parts[1].parse().unwrap();
         } else {
             match range.trim().parse::<u8>() {
                 Ok(n) => {
@@ -24,14 +28,6 @@ impl FromStr for IpRangeBounds {
                 },
                 Err(e) => return Err(String::from(format!("Range {} is not a valid u8 value",range))),
             }
-        }
-
-        if lower < 0 {
-            return Err(String::from("Lower bound may not be lower 0"))
-        }
-
-        if upper > 255 {
-            return Err(String::from("Upper bound may not be higher than 255"))
         }
 
         if upper < lower {
