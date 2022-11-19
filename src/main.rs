@@ -4,6 +4,7 @@ use std::collections::VecDeque;
 use std::str::FromStr;
 use crate::ip::ip_range::IpRange;
 use crate::ip::ip_range_bounds::IpRangeBounds;
+use std::time::{Instant};
 
 mod ip;
 mod logger;
@@ -43,13 +44,31 @@ enum SubCommand {
 fn index(r0: &str, r1: &str, r2: &str, r3: &str, logger: &DummyLogger) -> std::io::Result<()> {
     logger.debug(format!("Indexing range: [{}].[{}].[{}].[{}]",r0,r1,r2,r3));
 
-    let range = IpRange::new(
+    let mut range = IpRange::new(
         IpRangeBounds::from_str(r0).unwrap(),
         IpRangeBounds::from_str(r1).unwrap(),
         IpRangeBounds::from_str(r2).unwrap(),
         IpRangeBounds::from_str(r3).unwrap(),
     );
 
+    let full = Instant::now();
+    let mut batch_nr: u32 = 0;
+    let mut generated: u64 = 0;
+    while range.has_more_batches() {
+        logger.debug(format!("Batch: {}", batch_nr));
+
+        let batch = range.generate_next_batch(100000);
+
+        generated = generated + batch.len() as u64;
+
+        let next_duration = full.elapsed();
+        let pr_milli: u32 = generated as u32/next_duration.as_millis() as u32;
+        logger.debug(format!("  Generated: {} ips at {} pr. milli", generated,pr_milli));
+        batch_nr = batch_nr + 1;
+    }
+
+    let pr_second: f32 = full.elapsed().as_millis() as f32 / 1000 as f32;
+    logger.debug(format!("Finished in {} seconds", pr_second));
     return Ok(());
 }
 

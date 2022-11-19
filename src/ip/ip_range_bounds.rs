@@ -1,8 +1,8 @@
 use std::str::FromStr;
 
 pub struct IpRangeBounds {
-    lower: u8,
-    upper: u8
+    pub lower: u8,
+    pub upper: u8
 }
 
 impl FromStr for IpRangeBounds {
