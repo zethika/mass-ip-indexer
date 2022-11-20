@@ -1,5 +1,6 @@
 use std::str::FromStr;
 
+#[derive(Copy, Clone)]
 pub struct IpRangeBounds {
     pub lower: u8,
     pub upper: u8

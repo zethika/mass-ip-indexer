@@ -7,6 +7,7 @@ struct IpRangeIncreases {
     pub range3: u8,
 }
 
+#[derive(Copy, Clone)]
 pub struct IpRange {
     range0: IpRangeBounds,
     range1: IpRangeBounds,

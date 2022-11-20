@@ -4,6 +4,7 @@ use std::str::FromStr;
 use crate::ip::ip_range::IpRange;
 use crate::ip::ip_range_bounds::IpRangeBounds;
 use std::time::{Instant};
+use std::thread;
 
 mod ip;
 mod logger;
@@ -43,7 +44,7 @@ enum SubCommand {
 fn index(r0: &str, r1: &str, r2: &str, r3: &str, logger: &DummyLogger) -> std::io::Result<()> {
     logger.debug(format!("Indexing range: [{}].[{}].[{}].[{}]",r0,r1,r2,r3));
 
-    let mut range = IpRange::new(
+    let range = IpRange::new(
         IpRangeBounds::from_str(r0).unwrap(),
         IpRangeBounds::from_str(r1).unwrap(),
         IpRangeBounds::from_str(r2).unwrap(),
@@ -51,19 +52,28 @@ fn index(r0: &str, r1: &str, r2: &str, r3: &str, logger: &DummyLogger) -> std::i
     );
 
     let full = Instant::now();
-    let batch_size = 100000;
+    let batch_size = 200000;
     let mut batch_nr: usize = 0;
     let max_batch = (range.total_size as f32 / batch_size as f32).floor() as usize;
-
+    let mut threads = Vec::new();
     while batch_nr <= max_batch {
-        logger.debug(format!("Batch: {}", batch_nr));
+        let handle = thread::spawn(move || {
+            let batch = range.generate_nth_batch(batch_nr,batch_size);
+        });
 
-        let batch = range.generate_nth_batch(batch_nr,batch_size);
-
-        let next_duration = full.elapsed();
-        let pr_milli: u32 = (batch_size * batch_nr) as u32/next_duration.as_millis() as u32;
-        logger.debug(format!("  Generated: {} ips at {} pr. milli", batch_size * batch_nr,pr_milli));
         batch_nr = batch_nr + 1;
+
+        threads.push(handle);
+        if threads.len() >= 10 {
+            for thread in threads {
+                thread.join().unwrap();
+            }
+            threads = Vec::new();
+            let next_duration = full.elapsed();
+            let pr_milli: u32 = (batch_size * batch_nr) as u32/next_duration.as_millis() as u32;
+            logger.debug(format!("Batch: {}", batch_nr));
+            logger.debug(format!("  Generated: {} ips at {} pr. milli", batch_size * batch_nr,pr_milli));
+        }
     }
 
     let pr_second: f32 = full.elapsed().as_millis() as f32 / 1000 as f32;
