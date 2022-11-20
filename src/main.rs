@@ -1,6 +1,5 @@
 use clap::{Parser, Subcommand};
 use logger::DummyLogger;
-use std::collections::VecDeque;
 use std::str::FromStr;
 use crate::ip::ip_range::IpRange;
 use crate::ip::ip_range_bounds::IpRangeBounds;
@@ -52,18 +51,18 @@ fn index(r0: &str, r1: &str, r2: &str, r3: &str, logger: &DummyLogger) -> std::i
     );
 
     let full = Instant::now();
-    let mut batch_nr: u32 = 0;
-    let mut generated: u64 = 0;
-    while range.has_more_batches() {
+    let batch_size = 100000;
+    let mut batch_nr: usize = 0;
+    let max_batch = (range.total_size as f32 / batch_size as f32).floor() as usize;
+
+    while batch_nr <= max_batch {
         logger.debug(format!("Batch: {}", batch_nr));
 
-        let batch = range.generate_next_batch(100000);
-
-        generated = generated + batch.len() as u64;
+        let batch = range.generate_nth_batch(batch_nr,batch_size);
 
         let next_duration = full.elapsed();
-        let pr_milli: u32 = generated as u32/next_duration.as_millis() as u32;
-        logger.debug(format!("  Generated: {} ips at {} pr. milli", generated,pr_milli));
+        let pr_milli: u32 = (batch_size * batch_nr) as u32/next_duration.as_millis() as u32;
+        logger.debug(format!("  Generated: {} ips at {} pr. milli", batch_size * batch_nr,pr_milli));
         batch_nr = batch_nr + 1;
     }
 
